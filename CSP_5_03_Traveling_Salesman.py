@@ -1,13 +1,17 @@
 import math
 import random
+from pickletools import bytes_types
 
-import pygame
+
 import itertools
 
 def getPathDistance(places : list):
     #Given a list of x,y coordinates return the distance it would take to go to each coordinate
     # in order and then back to the start.
     dist = 0
+    for i in range(len(places)-1):
+        dist += getDistance(places[i], places[i + 1])
+    dist += getDistance(places[-1], places[0])
     return dist
 
 
@@ -15,23 +19,59 @@ def full_TSP(places : list):
     #Check the distance of all possible different paths one could take over a set of x,y coordiantes
     #and return the path with the shotest distance
     #Print out the number of distance calculations you had to do.
+    allPaths = generatePermutations(places)
 
-    bestRoute = []
-    calculations = 0
+    bestRoute = list(allPaths[0])
+    shortestDistance = getPathDistance(bestRoute)
+    calculations = 1
+
+    for path in allPaths[1:]:
+        calculations += 1
+        dist = getPathDistance(list(path))
+        if dist < shortestDistance:
+            shortestDistance = dist
+            bestRoute = list(path)
 
     print(f"there were {calculations} calculations for full TSP")
-    return bestRoute
+    return tuple(bestRoute)
+
 
 def hueristic_TSP(places : list):
     #Perform a hueristic calculation for traveling salesman.
     #For each node find the closest node to it and assume it is next node then repeat until you have your path.
-    #Return the path. andprint out the number of distance calculations you did.
-
-
+    #Return the path. and print out the number of distance calculations you did.
     calculations = 0
 
+    n = len(places)
+    if n == 0:
+        print("there were 0 calculations for hueristic TSP")
+        return []
+
+    path = [places[0]]
+    calculations = 0
+    visited_indices = [0]
+
+    for _ in range(1, n):
+        current = path[-1]
+        closest_index = None
+        closest_dist = None
+
+        for i in range(n):
+            if i in visited_indices:
+                continue
+            dist = getDistance(current, places[i])
+            calculations += 1
+            if closest_index is None or dist < closest_dist:
+                closest_index = i
+                closest_dist = dist
+
+            # Add the closest place
+        path = path + [places[closest_index]]
+        visited_indices = visited_indices + [closest_index]
+
     print(f"there were {calculations} calculations for hueristic TSP")
-    return []
+    return path
+
 
 def generatePermutations(places : list):
     # a function that given a list will return all possible permutations of the list.
@@ -55,6 +95,7 @@ places = [[80,75],[100,520],[530,300],[280,200],[350,150],[700,120],[400,500]]
 
 
 def DrawExample(places):
+    import pygame
     #Draws the TSP showcase to the screen.
     TSP = full_TSP(places.copy())
     Hueristic = hueristic_TSP(places.copy())
@@ -92,6 +133,6 @@ def DrawExample(places):
         pygame.display.flip()
     # Quit Pygame
 
-DrawExample(places)
+#DrawExample(places)
 #DrawExample(generate_RandomCoordinates(5))# DO NOT run more than 9 or 10
-pygame.quit()
+#pygame.quit()
